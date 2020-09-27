@@ -43,7 +43,7 @@ void setup() {
   pinMode(ENABLE,OUTPUT); // Enable
   digitalWrite(ENABLE,LOW); // Set Enable low
   stepper1.begin(RPM,MICROSTEPS); // RPM, 1R travel 18 inch
-  stepper1.startRotate(90);
+  stepper1.startRotate(45);
 }
 
 void loop() {
@@ -51,9 +51,9 @@ void loop() {
   if (wait_time_micros <=0){
     stepper1.disable();
     digitalWrite(ENABLE,HIGH);
-    delay(5000);
+    delay(1000);
     digitalWrite(ENABLE,LOW);
-    stepper1.startRotate(90);
+    stepper1.startRotate(45);
   }
 
   Serial.println("Complete 66 steps");
