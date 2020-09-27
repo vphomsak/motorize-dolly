@@ -31,13 +31,13 @@ void setup() {
   Serial.begin(9600);
   
   //sensor set up
-  pinMode(ledPin, OUTPUT); // declare LED as output
-  pinMode(inputPin, INPUT); // declare sensor as input
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(enA, OUTPUT);
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
+//  pinMode(ledPin, OUTPUT); // declare LED as output
+//  pinMode(inputPin, INPUT); // declare sensor as input
+//  pinMode(in1, OUTPUT);
+//  pinMode(in2, OUTPUT);
+//  pinMode(enA, OUTPUT);
+//  digitalWrite(in1, LOW);
+//  digitalWrite(in2, HIGH);
   
   //motor set up
   pinMode(ENABLE,OUTPUT); // Enable
