@@ -18,9 +18,7 @@ int ledPin = 13; // choose the pin for the LED
 int sensorIn = 8; // choose the input pin (for PIR sensor)
 int pirState = LOW; // we start, assuming no motion detected
 int val = 0; // variable for reading the pin status
-#define enA 9
-#define in1 6
-#define in2 7
+
 
 
 A4988 stepper1(MOTOR_STEPS, DIR, STEP,MS1,MS2,MS3);
@@ -31,22 +29,12 @@ void setup() {
   Serial.begin(9600);
   
   //sensor set up
-//  pinMode(ledPin, OUTPUT); // declare LED as output
-//  pinMode(inputPin, INPUT); // declare sensor as input
-//  pinMode(in1, OUTPUT);
-//  pinMode(in2, OUTPUT);
-//  pinMode(enA, OUTPUT);
-//  digitalWrite(in1, LOW);
-//  digitalWrite(in2, HIGH);
-
   pinMode(sensorIn, INPUT);
-  
-  //motor set up
   pinMode(ledPin,OUTPUT);
+  //motor set up
   pinMode(ENABLE,OUTPUT); 
   digitalWrite(ENABLE,LOW); // Set Enable low
   stepper1.begin(RPM,MICROSTEPS); // RPM, 1R travel 18 inch
-//  stepper1.startRotate(45);
 }
 
 void runMotor(){
@@ -54,7 +42,6 @@ void runMotor(){
   if (wait_time_micros <=0){
     stepper1.disable();
     digitalWrite(ENABLE,HIGH);
-//    delay(2000);
     digitalWrite(ENABLE,LOW);
     stepper1.startRotate(90);
   }
@@ -76,12 +63,10 @@ void loop() {
         Serial.println("Motion Ended.");
         pirState = LOW;
         stepper1.disable();
-    digitalWrite(ENABLE,HIGH);
+        digitalWrite(ENABLE,HIGH);
       }
   }
- 
-//  runMotor();
-//  delay(2000);
+}
 
 /*
   unsigned wait_time_micros = stepper1.nextAction();
@@ -93,7 +78,3 @@ void loop() {
     stepper1.startRotate(90);
   }
   */
-
-
-//  Serial.println("Complete 66 steps");
-}
