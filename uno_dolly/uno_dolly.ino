@@ -4,8 +4,8 @@
 
 // change this to the number of steps on your motor
 #define MOTOR_STEPS 200
-#define RPM 1000
-#define MICROSTEPS 2
+#define RPM 10
+#define MICROSTEPS 16
 // configure the pins connected for motor
 #define DIR 2
 #define STEP 3
@@ -15,7 +15,7 @@
 #define MS3 7
 // configure sensor pins
 int ledPin = 13; // choose the pin for the LED
-int inputPin = 52; // choose the input pin (for PIR sensor)
+int sensorIn = 8; // choose the input pin (for PIR sensor)
 int pirState = LOW; // we start, assuming no motion detected
 int val = 0; // variable for reading the pin status
 #define enA 9
@@ -38,23 +38,62 @@ void setup() {
 //  pinMode(enA, OUTPUT);
 //  digitalWrite(in1, LOW);
 //  digitalWrite(in2, HIGH);
+
+  pinMode(sensorIn, INPUT);
   
   //motor set up
-  pinMode(ENABLE,OUTPUT); // Enable
+  pinMode(ledPin,OUTPUT);
+  pinMode(ENABLE,OUTPUT); 
   digitalWrite(ENABLE,LOW); // Set Enable low
   stepper1.begin(RPM,MICROSTEPS); // RPM, 1R travel 18 inch
-  stepper1.startRotate(45);
+//  stepper1.startRotate(45);
 }
 
-void loop() {
+void runMotor(){
   unsigned wait_time_micros = stepper1.nextAction();
   if (wait_time_micros <=0){
     stepper1.disable();
     digitalWrite(ENABLE,HIGH);
-    delay(1000);
+//    delay(2000);
     digitalWrite(ENABLE,LOW);
-    stepper1.startRotate(45);
+    stepper1.startRotate(90);
   }
+}
+void loop() {
 
-  Serial.println("Complete 66 steps");
+  val = digitalRead(sensorIn);
+  if (val == HIGH && stepper1.nextAction() <= 0){
+    digitalWrite(ledPin,HIGH);
+    if (pirState == LOW) {
+      Serial.println("Motion Detected");
+      pirState = HIGH;
+      runMotor();
+
+    }
+  }else if (stepper1.nextAction() <= 0){
+      digitalWrite(ledPin,LOW);
+      if (pirState == HIGH) {
+        Serial.println("Motion Ended.");
+        pirState = LOW;
+        stepper1.disable();
+    digitalWrite(ENABLE,HIGH);
+      }
+  }
+ 
+//  runMotor();
+//  delay(2000);
+
+/*
+  unsigned wait_time_micros = stepper1.nextAction();
+  if (wait_time_micros <=0){
+    stepper1.disable();
+    digitalWrite(ENABLE,HIGH);
+    delay(2000);
+    digitalWrite(ENABLE,LOW);
+    stepper1.startRotate(90);
+  }
+  */
+
+
+//  Serial.println("Complete 66 steps");
 }
