@@ -33,7 +33,7 @@ void setup() {
   pinMode(ledPin,OUTPUT);
   //motor set up
   pinMode(ENABLE,OUTPUT); 
-  digitalWrite(ENABLE,LOW); // Set Enable low
+  digitalWrite(ENABLE,HIGH); // disable powering of controller
   stepper1.begin(RPM,MICROSTEPS); // RPM, 1R travel 18 inch
 }
 
@@ -41,7 +41,6 @@ void runMotor(){
   unsigned wait_time_micros = stepper1.nextAction();
   if (wait_time_micros <=0){
     stepper1.disable();
-    digitalWrite(ENABLE,HIGH);
     digitalWrite(ENABLE,LOW);
     stepper1.startRotate(90);
   }
