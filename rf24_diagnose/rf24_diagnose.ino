@@ -205,21 +205,23 @@ if (role == 1)  {
         Serial.print(F("Receive: "));
         Serial.println(got_time); 
       }
-    }
-     
+
       radio.stopListening();                                        // First, stop listening so we can talk   
       radio.write( &got_time, sizeof(unsigned long) );              // Send the final one back.      
       radio.startListening(); 
+      
       if (got_time == 2223333){
           digitalWrite(2,HIGH); 
           delay(10);
           digitalWrite(2,LOW);
-          Serial.print(F("Sent response "));
-          Serial.println(got_time); 
-          got_time = 0;
       }
+      
       // Now, resume listening so we catch the next packets.     
-        
+        Serial.print(F("Sent response "));
+          Serial.println(got_time);
+    }
+     
+      
  }
  
  
