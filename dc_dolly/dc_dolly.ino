@@ -8,14 +8,17 @@
 //motor pin
 const int right_pwm = 3;
 const int left_pwm = 5;
-const int dutyCycle = 250; //pwm 0-255
+const int dutyCycle = 200; //pwm 0-255 - how much volage in the motor- smaller value less power 
 
 //Movements
-unsigned long unwind_time = 5000; // 10 sec
+unsigned long unwind_time = 5000; // 10 sec the pause before it turns (goes back)
 unsigned long unwind_start = 0; // the time the delay started
 bool unwinding = false; // true if still waiting for delay to finish
-const int default_step = 5;
-const int duration_per_step = 100 ; // millisecond
+const int default_step = 2;
+const int turn_step = 4; 
+const int duration_per_step = 50; // millisecond 2000 the peroid of motor on
+const int delay_between_step = 100; // time between each step - less the smoother the greater the more pause
+
 
 
 // configure sensor pins
@@ -23,6 +26,7 @@ const int sensorCenter = 9; // choose the input pin (for PIR sensor)
 const int sensorSide = 8;
 int pirState = LOW; // we start, assuming no motion detected
 int val = 0; // variable for reading the pin status
+bool sensor_pause = false;
 
 const int led_tx = 2;const int led_rx = 12;
 
@@ -36,12 +40,12 @@ RF24 radio(6,7); //6-CS 7-CSN
 
 
 typedef enum {controller, left_wheel, right_wheel} role_type;
-typedef enum {forward, backward,right_turn,left_turn} motion_type;
+typedef enum {forward, backward,right_turn,left_turn,pause_sensor,unpause_sensor} motion_type;
 
 byte nodes[][6] = {"1Node","2Node","3Node"};
 
-//**** Setting the board role before upload the code to arduino
-role_type role = left_wheel; //left_wheel; //controller;
+//**** Setting the board role before upload the code to ardui
+role_type role = right_wheel; //left_wheel; //controller;
 
 motion_type last_motion;
 
@@ -148,6 +152,10 @@ void digestMessage(motion_type motion){
       break;
     case backward:
       move_backward(default_step);
+    case pause_sensor:
+      sensor_pause = true;
+    case unpause_sensor:
+      sensor_pause = false;
     } 
 }
 
@@ -173,8 +181,10 @@ void moveDolly(motion_type motion){
 */
 
 void stop(){
-  analogWrite(left_pwm,LOW);
-  analogWrite(right_pwm,HIGH);
+  analogWrite(left_pwm,0);
+  analogWrite(right_pwm,0);
+//  digitalWrite(left_pwm,LOW);
+//  digitalWrite(right_pwm,HIGH);
 }
 
 void move_forward(int step){
@@ -187,26 +197,27 @@ void move_backward(int step){
 
 void turn_left() {
   if (role == left_wheel)
-    move_backward(2);
+    move_backward(turn_step);
   else
-    move_forward(2);
+    move_forward(turn_step);
 }
 
 void turn_right(){
   if (role == left_wheel)
-    move_forward(2);
+    move_forward(turn_step);
   else
-    move_backward(2);
+    move_backward(turn_step);
 }
 void stepping(int step, int duration, int disable_pin, int enable_pin){
   analogWrite(disable_pin, 0);
   delayMicroseconds(100);
   for (int i = 0; i < step; i++){
-    analogWrite(enable_pin, dutyCycle);
+    analogWrite(enable_pin, dutyCycle); //running
     delay(duration);
     stop();
-    delay(500);
+    delay(delay_between_step);
   }
+ 
   
 }
 void blink(int pin, int n){
@@ -255,24 +266,26 @@ void loop() {
     if (millis() - unwind_start > unwind_time){
       Serial.print("Unwinding:"); Serial.println(last_motion);
       if (last_motion == forward){
-        move_backward(default_step);
         broadcastMessage(backward);
+        move_backward(default_step);
       }else if (last_motion == left_turn){
-        turn_right();
         broadcastMessage(right_turn);
+        turn_right();
       }else if (last_motion == right_turn){
-        turn_left();
         broadcastMessage(left_turn);
+        turn_left();
       }
       unwinding = false;
+      broadcastMessage(unpause_sensor);
       
     }
-  }else if (role != controller){
+  }else if (role != controller && !sensor_pause){
     if (!checkSensor(sensorSide))
       checkSensor(sensorCenter);
     if (pirState == HIGH){
       unwinding = true;
       unwind_start = millis();
+      broadcastMessage(pause_sensor);
     }
   }else { //controller role
     if (digitalRead(button_forward) == HIGH)
@@ -287,7 +300,7 @@ void loop() {
   }
   
   if (radio.available()){
-    motion_type motion = -1;
+    motion_type motion ;
     radio.read(&motion,sizeof(motion_type));
     displayMessage(motion);
     if(!unwinding)
