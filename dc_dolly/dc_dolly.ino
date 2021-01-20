@@ -8,17 +8,16 @@
 //motor pin
 const int right_pwm = 3;
 const int left_pwm = 5;
-const int dutyCycle = 200; //pwm 0-255 - how much volage in the motor- smaller value less power 
+const int dutyCycle = 120; //pwm 0-255 - how much volage in the motor- smaller value less power 
 
 //Movements
 unsigned long unwind_time = 5000; // 10 sec the pause before it turns (goes back)
 unsigned long unwind_start = 0; // the time the delay started
 bool unwinding = false; // true if still waiting for delay to finish
-const int default_step = 2;
+const int default_step = 1;
 const int turn_step = 4; 
-const int duration_per_step = 50; // millisecond 2000 the peroid of motor on
-const int delay_between_step = 100; // time between each step - less the smoother the greater the more pause
-
+const int duration_per_step = 30; // millisecond 2000 the peroid of motor on
+const int delay_between_step = 35; // time between each step - less the smoother the greater the more pause
 
 
 // configure sensor pins
@@ -40,12 +39,12 @@ RF24 radio(6,7); //6-CS 7-CSN
 
 
 typedef enum {controller, left_wheel, right_wheel} role_type;
-typedef enum {forward, backward,right_turn,left_turn,pause_sensor,unpause_sensor} motion_type;
+typedef enum {forward = 5, backward,right_turn,left_turn,pause_sensor,unpause_sensor} motion_type;
 
 byte nodes[][6] = {"1Node","2Node","3Node"};
 
 //**** Setting the board role before upload the code to ardui
-role_type role = right_wheel; //left_wheel; //controller;
+role_type role = left_wheel; //left_wheel; //controller;
 
 motion_type last_motion;
 
@@ -85,7 +84,7 @@ void setup() {
   pinMode(left_pwm,OUTPUT);
   
   //sensor set up
-  pinMode(sensorCenter, INPUT);
+//  pinMode(sensorCenter, INPUT);
   pinMode(sensorSide, INPUT);
 
   if (role == controller){
@@ -113,7 +112,7 @@ void runMotor(){
 }
 
 void broadcastMessage(motion_type motion){
-  Serial.print("Broadcast message."); Serial.println(motion);
+  Serial.print("Broadcast message:"); Serial.println(motion);
   radio.stopListening();
   radio.write(&motion,sizeof(motion_type));
   radio.startListening();
@@ -231,8 +230,11 @@ void blink(int pin, int n){
 
 bool checkSensor(int sensor){
   val = digitalRead(sensor);
-    if (val == HIGH){
+  if (val == HIGH){
       digitalWrite(led_tx,HIGH);
+//      digitalWrite(sensorSide,LOW);
+//      digitalWrite(sensorCenter,LOW);
+//      Serial.println("Sensor read high ");
       if (pirState == LOW) {
         Serial.print("Motion Detected at Pin:"); Serial.println(sensor);
         pirState = HIGH;
@@ -242,6 +244,7 @@ bool checkSensor(int sensor){
           last_motion = forward;
         }else{
           motion_type mt = (role == left_wheel? left_turn : right_turn);
+//          Serial.println("I m broadcasting");
           broadcastMessage(mt); //role == left_wheel? left_turn : right_turn);
           if (mt == left_turn)
             turn_left();
@@ -250,8 +253,10 @@ bool checkSensor(int sensor){
           last_motion = mt;
         }
       }
+      
    }else{
       digitalWrite(led_tx,LOW);
+//      Serial.println("Sensor read low");
       if (pirState == HIGH) {
         Serial.println("Motion Ended.");
         pirState = LOW;      
@@ -263,6 +268,7 @@ bool checkSensor(int sensor){
 void loop() {
   
   if (unwinding){
+//    Serial.print("in unwinding loop");
     if (millis() - unwind_start > unwind_time){
       Serial.print("Unwinding:"); Serial.println(last_motion);
       if (last_motion == forward){
@@ -280,11 +286,14 @@ void loop() {
       
     }
   }else if (role != controller && !sensor_pause){
-    if (!checkSensor(sensorSide))
-      checkSensor(sensorCenter);
+//    Serial.println("get ready to check sensor");
+//    if (!checkSensor(sensorSide))
+//      checkSensor(sensorCenter);
+    checkSensor(sensorSide);
     if (pirState == HIGH){
       unwinding = true;
       unwind_start = millis();
+//      Serial.println("I M here");
       broadcastMessage(pause_sensor);
     }
   }else { //controller role
@@ -300,12 +309,12 @@ void loop() {
   }
   
   if (radio.available()){
-    motion_type motion ;
+    motion_type motion;
     radio.read(&motion,sizeof(motion_type));
     displayMessage(motion);
     if(!unwinding)
-      digestMessage(motion);
-    
+        digestMessage(motion);
+
  }
 
  
